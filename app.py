@@ -24,11 +24,12 @@ def get_pdf_text(pdf_docs):
     text=""
     for pdf in pdf_docs:
         pdf_reader= PdfReader(pdf)
+        #Reading all the pages in the pdf and extracting the texts from the pdf
         for page in pdf_reader.pages:
             text+= page.extract_text()
     return  text
 
-#Chunking the text from the PDF
+#Chunking the text extracted from the PDF
 def get_text_chunks(text):
     text_splitter=RecursiveCharacterTextSplitter(chunk_size=10000,chunk_overlap=1000)
     chunks=text_splitter.split_text(text)
@@ -64,7 +65,7 @@ def user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
     
     #load the indexes from the vector database
-    new_db = FAISS.load_local("faiss_index", embeddings)
+    new_db = FAISS.load_local("faiss_index", embeddings,allow_dangerous_deserialization=True)
     #check the similarity with the user question
     docs = new_db.similarity_search(user_question)
 
