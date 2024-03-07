@@ -126,14 +126,11 @@ def main():
         #Adding the assistant response to chat history
         st.session_state.messages.append({"role":"assistant","content":response})
 
-    #Adding a function to clear chat history
+    #Function to clear history
     def clear_chat_history():
         st.session_state.messages = [{"role":"assistant","content":"Please go ahead and ask a question from your uploaded files?"}]
     #Button for clearing history
-    st.sidebar.button("Clear Chat History",on_click=clear_chat_history())  
-
-
-
+    st.sidebar.button("Clear Chat History",on_click=clear_chat_history)  
 
 
 
