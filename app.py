@@ -11,6 +11,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
+from itertools import count
+
+
 
 
 load_dotenv()
@@ -31,7 +34,7 @@ def get_pdf_text(pdf_docs):
 
 #Chunking the text extracted from the PDF
 def get_text_chunks(text):
-    text_splitter=RecursiveCharacterTextSplitter(chunk_size=10000,chunk_overlap=1000)
+    text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=100)
     chunks=text_splitter.split_text(text)
     return chunks
 
@@ -75,22 +78,19 @@ def user_input(user_question):
     response = chain(
         {"input_documents":docs, "question": user_question}
         , return_only_outputs=True)
-
-    print(response)
-    st.write("Reply: ", response["output_text"])
+    
+    return response["output_text"]
+    #st.write("Reply: ", response["output_text"])
+    
 
 #Main Function
 def main():
-    st.set_page_config("Chat PDF")
-    st.header("Chat with your PDF Content")
-
-    user_question = st.text_input("Ask a Question from your PDF Files")
-
-    if user_question:
-        user_input(user_question)
-
+    st.set_page_config("Chatting with Documents: 📁")
+    st.header("Chat with your Documents: 📁")
+    
+    #Uploading the PDF Files:
     with st.sidebar:
-        st.title("Menu:")
+        st.title("Menu:📋")
         pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=True)
         if st.button("Submit & Process"):
             with st.spinner("Processing..."):
@@ -98,6 +98,42 @@ def main():
                 text_chunks = get_text_chunks(raw_text)
                 get_vector_store(text_chunks)
                 st.success("Done")
+
+    #Initialize Chat History
+    if "messages" not in st.session_state:
+        st.session_state.messages = [{"role":"assistant","content":"Please go ahead and ask a question from your uploaded files?"}]
+    
+    #Displaying chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    #Getting the user's input
+    user_question = st.chat_input("Ask a Question from your PDF Files")
+    #Checking if the user has input  a message
+    if user_question:
+        #Displaying the user question in the chat message
+        with st.chat_message("user"):
+            st.markdown(user_question)
+        #Adding user question to chat history
+        st.session_state.messages.append({"role":"user","content":user_question})
+
+        #Getting the respoonse
+        response = user_input(user_question)
+        #Displyaing the assistant response
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        #Adding the assistant response to chat history
+        st.session_state.messages.append({"role":"assistant","content":response})
+
+    #Adding a function to clear chat history
+    def clear_chat_history():
+        st.session_state.messages = [{"role":"assistant","content":"Please go ahead and ask a question from your uploaded files?"}]
+    #Button for clearing history
+    st.sidebar.button("Clear Chat History",on_click=clear_chat_history())  
+
+
+
 
 
 
